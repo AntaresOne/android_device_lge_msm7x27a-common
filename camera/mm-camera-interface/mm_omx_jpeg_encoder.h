@@ -29,7 +29,7 @@
 #ifndef MM_OMX_JPEG_ENCODER_H_
 #define MM_OMX_JPEG_ENCODER_H_
 #include <linux/msm_ion.h>
-#include "QCamera_Intf.h"
+#include "camera.h"
 
 typedef struct omx_jpeg_encode_params_t {
     const cam_ctrl_dimension_t * dimension;

@@ -92,7 +92,11 @@ typedef enum {
     MM_CAMERA_CH_VIDEO,
     MM_CAMERA_CH_SNAPSHOT,
     MM_CAMERA_CH_RAW,
-    MM_CAMERA_CH_RDI,
+    MM_CAMERA_CH_SAEC,
+    MM_CAMERA_CH_SAWB,
+    MM_CAMERA_CH_SAFC,
+    MM_CAMERA_CH_IHST,
+    MM_CAMERA_CH_CSTA,
     MM_CAMERA_CH_MAX
 } mm_camera_channel_type_t;
 
@@ -203,7 +207,6 @@ typedef struct {
 
 typedef enum {
     MM_CAMERA_OPS_PREVIEW,                    // start/stop preview
-    MM_CAMERA_OPS_RDI,                        // start/stop rdi
     MM_CAMERA_OPS_VIDEO,                      // start/stop video
     MM_CAMERA_OPS_PREPARE_SNAPSHOT,           // prepare capture in capture mode
     MM_CAMERA_OPS_SNAPSHOT,                   // take snapshot (HDR,ZSL,live shot)
@@ -212,6 +215,7 @@ typedef enum {
     // mm_camera_ops_parm_get_buffered_frame_t is used for MM_CAMERA_OPS_GET_BUFFERED_FRAME
     MM_CAMERA_OPS_GET_BUFFERED_FRAME,         // channel to dispatch buffered frame to app through call back
     MM_CAMERA_OPS_FOCUS,                      // change focus,isp3a_af_mode_t* used in val
+	MM_CAMERA_OPS_UNPREPARE_SNAPSHOT,		  // do the unprepare logic for prepare snap
     MM_CAMERA_OPS_MAX                         // max ops
 }mm_camera_ops_type_t;
 
@@ -253,6 +257,7 @@ typedef struct {
     int water_mark;
     int look_back;
     int interval;  /*skipping n-1 frames*/
+    uint32_t match_id;
 } mm_camera_channel_attr_buffering_frame_t;
 
 typedef struct {
@@ -275,10 +280,10 @@ typedef struct {
     uint8_t (*is_parm_supported)(mm_camera_t *camera, mm_camera_parm_type_t parm_type);
     /* if the channel is supported */
     uint8_t (*is_ch_supported)(mm_camera_t *camera, mm_camera_channel_type_t ch_type);
-    /* set a parm\92s current value */
+    /* set a parm’s current value */
     int32_t (*set_parm)(mm_camera_t *camera, mm_camera_parm_type_t parm_type,
           void* p_value);
-    /* get a parm\92s current value */
+    /* get a parm’s current value */
     int32_t (*get_parm)(mm_camera_t *camera, mm_camera_parm_type_t parm_type,
           void* p_value);
     int32_t (*request_buf) (mm_camera_t *camera, mm_camera_reg_buf_t *buf);
@@ -294,7 +299,6 @@ typedef struct {
                     mm_camera_ops_type_t opcode, void *val);
     int32_t (*open)(mm_camera_t * camera, mm_camera_op_mode_type_t op_mode);
     void (*close)(mm_camera_t * camera);
-    void (*stop)(mm_camera_t * camera);
     int32_t (*ch_acquire)(mm_camera_t * camera, mm_camera_channel_type_t ch_type);
     void (*ch_release)(mm_camera_t * camera, mm_camera_channel_type_t ch_type);
     int32_t (*ch_set_attr)(mm_camera_t * camera, mm_camera_channel_type_t ch_type,
@@ -429,7 +433,7 @@ struct mm_camera {
     mm_camera_ops_t *ops;                   // operation interface
     mm_camera_notify_t *evt;                // evt callback interface
     mm_camera_jpeg_t *jpeg_ops;         // jpeg config and encoding interface
-    qcamera_info_t camera_info;      // postion, mount_angle, etc.
+    cam_dev_info_t camera_info;      // postion, mount_angle, etc.
     enum sensor_type_t sensor_type; // BAYER, YUV, JPEG_SOC, etc.
     char video_dev_name[32];           // device node name, e.g. /dev/video1
 };
@@ -453,12 +457,12 @@ uint8_t cam_config_is_parm_supported(
 uint8_t cam_config_is_ch_supported(
   int cam_id,
   mm_camera_channel_type_t ch_type);
-/* set a parm\92s current value */
+/* set a parm’s current value */
 int32_t cam_config_set_parm(
   int cam_id,
   mm_camera_parm_type_t parm_type,
   void* p_value);
-/* get a parm\92s current value */
+/* get a parm’s current value */
 int32_t cam_config_get_parm(
   int cam_id,
   mm_camera_parm_type_t parm_type,
@@ -475,7 +479,6 @@ int32_t cam_ops_action(int cam_id, uint8_t start,
   mm_camera_ops_type_t opcode, void *val);
 int32_t cam_ops_open(int cam_id, mm_camera_op_mode_type_t op_mode);
 void cam_ops_close(int cam_id);
-void cam_ops_stop(int cam_id);
 int32_t cam_ops_ch_acquire(int cam_id, mm_camera_channel_type_t ch_type);
 void cam_ops_ch_release(int cam_id, mm_camera_channel_type_t ch_type);
 int32_t cam_ops_ch_set_attr(int cam_id, mm_camera_channel_type_t ch_type,
@@ -527,4 +530,5 @@ uint8_t *mm_camera_do_mmap_ion(int ion_fd, struct ion_allocation_data *alloc,
   struct ion_fd_data *ion_info_fd, int *mapFd);
 int mm_camera_do_munmap_ion (int ion_fd, struct ion_fd_data *ion_info_fd,
                    void *addr, size_t size);
+extern void mm_camera_util_profile(const char *str);
 #endif /*__MM_CAMERA_INTERFACE2_H__*/

@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2011-2013 The Linux Foundation. All rights reserved.
+** Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -16,10 +16,6 @@
 
 #ifndef ANDROID_HARDWARE_QCAMERA_HARDWARE_INTERFACE_H
 #define ANDROID_HARDWARE_QCAMERA_HARDWARE_INTERFACE_H
-
-//#define LOG_NDEBUG 0   //To enable verbose logs
-//#define LOG_NDDEBUG 0 // To ebable Debug logs
-//#define LOG_NIDEBUG 0 // To enable Info logs
 
 
 #include <utils/threads.h>
@@ -50,7 +46,6 @@ extern "C" {
 #include "QCameraStream.h"
 #include "QCamera_Intf.h"
 
-#include "hdr/include/morpho_noise_reduction_ext.h"
 //Error codes
 #define  NOT_FOUND -1
 #define MAX_ZOOM_RATIOS 62
@@ -111,7 +106,7 @@ typedef enum {
   HAL_DUMP_FRM_VIDEO = 1<<1,
   HAL_DUMP_FRM_MAIN = 1<<2,
   HAL_DUMP_FRM_THUMBNAIL = 1<<3,
-  HAL_DUMP_FRM_RDI = 1<<4,
+
   /*8 bits mask*/
   HAL_DUMP_FRM_MAX = 1 << 8
 } HAL_cam_dump_frm_type_t;
@@ -125,7 +120,7 @@ typedef enum {
 } qQamera_mode_t;
 
 #define HAL_DUMP_FRM_MASK_ALL ( HAL_DUMP_FRM_PREVIEW + HAL_DUMP_FRM_VIDEO + \
-    HAL_DUMP_FRM_MAIN + HAL_DUMP_FRM_THUMBNAIL + HAL_DUMP_FRM_RDI)
+    HAL_DUMP_FRM_MAIN + HAL_DUMP_FRM_THUMBNAIL)
 #define QCAMERA_HAL_PREVIEW_STOPPED    0
 #define QCAMERA_HAL_PREVIEW_START      1
 #define QCAMERA_HAL_PREVIEW_STARTED    2
@@ -454,7 +449,6 @@ public:
     int  getThumbSizesFromAspectRatio(uint32_t aspect_ratio,
                                      int *picture_width,
                                      int *picture_height);
-    status_t setSupportedPreviewSize(int *picture_width, int *picture_height);
     bool isRawSnapshot();
     bool mShutterSoundPlayed;
     void dumpFrameToFile(struct msm_frame*, HAL_cam_dump_frm_type_t);
@@ -478,7 +472,7 @@ public:
       mm_camera_socket_msg_type msg_type);
 
     int allocate_ion_memory(QCameraHalHeap_t *p_camera_memory, int cnt,
-      int ion_type, int caching_type);
+      int ion_type);
     int deallocate_ion_memory(QCameraHalHeap_t *p_camera_memory, int cnt);
 
     int allocate_ion_memory(QCameraStatHeap_t *p_camera_memory, int cnt,
@@ -492,8 +486,6 @@ public:
     preview_format_info_t getPreviewFormatInfo( );
     bool isCameraReady();
     bool isNoDisplayMode();
-    uint32_t getChannelInterface();
-    void setChannelInterface(uint32_t value);
 
 private:
     int16_t  zoomRatios[MAX_ZOOM_RATIOS];
@@ -527,7 +519,6 @@ private:
     bool isSnapshotRunning();
 
     void processChannelEvent(mm_camera_ch_event_t *, app_notify_cb_t *);
-    void processRdiChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_cb_t *);
     void processPreviewChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_cb_t *);
     void processRecordChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_cb_t *);
     void processSnapshotChannelEvent(mm_camera_ch_event_type_t channelEvent, app_notify_cb_t *);
@@ -536,11 +527,13 @@ private:
     void processInfoEvent(mm_camera_info_event_t *event, app_notify_cb_t *);
     void processprepareSnapshotEvent(cam_ctrl_status_t *);
     void roiEvent(fd_roi_t roi, app_notify_cb_t *);
+    void zslFlashEvent(struct zsl_flash_t evt, app_notify_cb_t *);
     void zoomEvent(cam_ctrl_status_t *status, app_notify_cb_t *);
     void autofocusevent(cam_ctrl_status_t *status, app_notify_cb_t *);
     void handleZoomEventForPreview(app_notify_cb_t *);
     void handleZoomEventForSnapshot(void);
     status_t autoFocusEvent(cam_ctrl_status_t *, app_notify_cb_t *);
+    status_t autoFocusMoveEvent(cam_ctrl_status_t *, app_notify_cb_t *);
 
     void filterPictureSizes();
     bool supportsSceneDetection();
@@ -580,6 +573,7 @@ private:
     int getJpegRotation(void);
     int getISOSpeedValue();
     int getAutoFlickerMode();
+    int getFlashMode();
     status_t setAntibanding(const QCameraParameters& params);
     status_t setEffect(const QCameraParameters& params);
     status_t setExposureCompensation(const QCameraParameters &params);
@@ -608,7 +602,6 @@ private:
     status_t setSceneDetect(const QCameraParameters& params);
     status_t setStrTextures(const QCameraParameters& params);
     status_t setPreviewFormat(const QCameraParameters& params);
-    status_t setVideoFrameFormat(const QCameraParameters& params);
     status_t setSelectableZoneAf(const QCameraParameters& params);
     status_t setOverlayFormats(const QCameraParameters& params);
     status_t setHighFrameRate(const QCameraParameters& params);
@@ -627,7 +620,6 @@ private:
     status_t setCaptureBurstExp(void);
     status_t setPowerMode(const QCameraParameters& params);
     void takePicturePrepareHardware( );
-    status_t setChannelInterfaceMask(const CameraParameters& params);
     status_t setNoDisplayMode(const QCameraParameters& params);
     status_t setMobiCat(const QCameraParameters& params);
 
@@ -640,7 +632,6 @@ private:
     bool isZSLMode();
     bool isWDenoiseEnabled();
     void wdenoiseEvent(cam_ctrl_status_t status, void *cookie);
-    void wdnHdrStartEvent();
     bool isLowPowerCamcorder();
     void freePictureTable(void);
     void freeVideoSizeTable(void);
@@ -648,7 +639,6 @@ private:
     int32_t createPreview();
     int32_t createRecord();
     int32_t createSnapshot();
-    int32_t createRdi();
 
     int getHDRMode();
     //EXIF
@@ -679,14 +669,12 @@ private:
     camera_request_memory          mGetMemory;
     void                           *mCallbackCookie;
 
-    //sp<MemoryHeapBase>  mPreviewHeap;  //@Guru : Need to remove
     sp<AshmemPool>      mMetaDataHeap;
 
     mutable Mutex       mLock;
     //mutable Mutex       eventLock;
     Mutex         mCallbackLock;
     Mutex         mPreviewMemoryLock;
-    Mutex         mRdiMemoryLock;
     Mutex         mRecordingMemoryLock;
     Mutex         mAutofocusLock;
     Mutex         mMetaDataWaitLock;
@@ -700,7 +688,6 @@ private:
     QCameraStream       *mStreamRecord;
     QCameraStream       *mStreamSnap;
     QCameraStream       *mStreamLiveSnap;
-    QCameraStream       *mStreamRdi;
 
     cam_ctrl_dimension_t mDimension;
     int  mPictureWidth_ui, mPictureHeight_ui;
@@ -715,7 +702,6 @@ private:
     int  mContrast;
     int  mBestShotMode;
     int  mEffects;
-    int  mColorEffects;
     int  mSkinToneEnhancement;
     int  mDenoiseValue;
     int  mHJR;
@@ -740,6 +726,7 @@ private:
     unsigned int mVideoSizeCount;
 
     bool mAutoFocusRunning;
+	bool mPrepareSnapshot;
     bool mNeedToUnlockCaf;
     bool mMultiTouch;
     bool mHasAutoFocusSupport;
@@ -757,7 +744,6 @@ private:
     bool mAppRecordingHint;
     bool mStartRecording;
     bool mReleasedRecordingFrame;
-    bool mStateLiveshot;
     int mHdrMode;
     int mSnapshotFormat;
     int mZslInterval;
@@ -814,18 +800,12 @@ private:
     friend class QCameraStream_record;
     friend class QCameraStream_preview;
     friend class QCameraStream_Snapshot;
-    friend class QCameraStream_Rdi;
-
-    android :: FPSRange* mSupportedFpsRanges;
-    int mSupportedFpsRangesCount;
 
     camera_size_type* mPictureSizes;
     camera_size_type* mPreviewSizes;
     camera_size_type* mVideoSizes;
     const camera_size_type * mPictureSizesPtr;
     HAL_camera_state_type_t mCameraState;
-    void *libdnr;
-    int (*LINK_morpho_DNR_ProcessFrame)(unsigned char* yuvImage, int width, int height, int y_level, int c_level);
 
      /* Temporary - can be removed after Honeycomb*/
 #ifdef USE_ION
@@ -845,7 +825,6 @@ private:
      /*preview memory without display case: memory is allocated
       directly by camera */
      QCameraHalHeap_t     mNoDispPreviewMemory;
-     QCameraHalHeap_t     mRdiMemory;
 
      QCameraHalHeap_t     mSnapshotMemory;
      QCameraHalHeap_t     mThumbnailMemory;
@@ -864,16 +843,11 @@ private:
      exif_values_t          mExifValues;                        //Exif values in usable format
      int                    mExifTableNumEntries;            //NUmber of entries in mExifData
      int                 mNoDisplayMode;
-     uint32_t            mChannelInterfaceMask;
+     android :: FPSRange* mSupportedFpsRanges;
+     int mSupportedFpsRangesCount;
 
-     /* Used to show the process state of snapshot_jpeg_cb*/
-     Mutex                  mSnapJpegCbLock;
-     Condition              mSnapJpegCbWait;
-     bool                   mSnapJpegCbRunning;
-     bool                   mSnapCbDisabled;
-
-    power_module_t*   mPowerModule;
-    int mSnapshotFlip;
+     power_module_t*   mPowerModule;
+     int mSnapshotFlip;
 };
 
 }; // namespace android

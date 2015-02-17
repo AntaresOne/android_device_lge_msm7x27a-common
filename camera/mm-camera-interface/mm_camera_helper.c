@@ -39,7 +39,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <time.h>
 #include "mm_camera_interface2.h"
 #include <linux/msm_ion.h>
-#include "QCamera_Intf.h"
+#include "camera.h"
 
 #define MM_CAMERA_PROFILE 1
 
@@ -230,7 +230,11 @@ uint32_t mm_camera_get_msm_frame_len(cam_format_t fmt_type,
       }
       break;
     case CAMERA_BAYER_SBGGR10:
-    case CAMERA_RDI:
+        *num_planes = 1;
+        plane[0] = PAD_TO_WORD(width * height);
+        size = plane[0];
+        break;
+    case CAMERA_YUV_422_YUYV:
         *num_planes = 1;
         plane[0] = PAD_TO_WORD(width * height);
         size = plane[0];

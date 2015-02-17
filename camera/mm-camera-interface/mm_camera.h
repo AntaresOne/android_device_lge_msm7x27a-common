@@ -85,7 +85,10 @@ typedef enum {
     MM_CAMERA_STREAM_THUMBNAIL,
     MM_CAMERA_STREAM_RAW,
     MM_CAMERA_STREAM_VIDEO_MAIN,
-    MM_CAMERA_STREAM_RDI0,
+    MM_CAMERA_STREAM_AEC,
+    MM_CAMERA_STREAM_AWB,
+    MM_CAMERA_STREAM_AF,
+    MM_CAMERA_STREAM_IHIST,
     MM_CAMERA_STREAM_MAX
 } mm_camera_stream_type_t;
 
@@ -141,10 +144,6 @@ typedef struct {
 } mm_camera_ch_preview_t;
 
 typedef struct {
-    mm_camera_stream_t stream;
-} mm_camera_ch_rdi_t;
-
-typedef struct {
     mm_camera_stream_t thumbnail;
     mm_camera_stream_t main;
     int    delivered_cnt;
@@ -171,6 +170,7 @@ typedef struct {
     mm_camera_channel_type_t type;
     pthread_mutex_t mutex;
     uint8_t acquired;
+    int zsl_evt;
     mm_camera_buf_cb_t buf_cb[MM_CAMERA_BUF_CB_MAX];
     mm_camera_channel_attr_buffering_frame_t buffering_frame;
     union {
@@ -178,7 +178,6 @@ typedef struct {
         mm_camera_ch_preview_t preview;
         mm_camera_ch_snapshot_t snapshot;
         mm_camera_ch_video_t video;
-        mm_camera_ch_rdi_t rdi;
     };
 } mm_camera_ch_t;
 
@@ -261,7 +260,6 @@ typedef struct {
     mm_camera_mem_map_t hist_mem_map;
     int full_liveshot;
     int snap_burst_num_by_user;
-    uint32_t channel_interface_mask;
     int mobicat_enable;
 } mm_camera_obj_t;
 
@@ -287,6 +285,8 @@ extern int32_t mm_camera_stream_fsm_fn_vtbl (mm_camera_obj_t * my_obj,
 extern const char *mm_camera_util_get_dev_name(mm_camera_obj_t * my_obj);
 extern int32_t mm_camera_util_s_ctrl( int32_t fd,
                                             uint32_t id, int32_t value);
+extern int32_t mm_camera_util_private_s_ctrl( int32_t fd,
+                                            uint32_t id, void __user *value);
 extern int32_t mm_camera_util_g_ctrl( int32_t fd,
                                             uint32_t id, int32_t *value);
 extern int32_t mm_camera_ch_fn(mm_camera_obj_t * my_obj,

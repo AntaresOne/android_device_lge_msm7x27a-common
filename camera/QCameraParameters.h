@@ -36,7 +36,6 @@
 
 namespace android {
 
-#ifndef QCOM_HARDWARE
 struct FPSRange{
     int minFPS;
     int maxFPS;
@@ -49,8 +48,6 @@ struct FPSRange{
         maxFPS=max;
     };
 };
-#endif
-
 class QCameraParameters: public CameraParameters
 {
 public:
@@ -149,8 +146,6 @@ public:
     //greater than supported by hardware.
     //Write only.
     static const char KEY_QC_MAX_NUM_REQUESTED_FACES[];
-
-    static const char KEY_QC_HDR_SUPPORTED[];
 
     //Redeye Reduction
     static const char KEY_QC_REDEYE_REDUCTION[];

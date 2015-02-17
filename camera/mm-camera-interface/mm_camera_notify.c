@@ -36,7 +36,7 @@ IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <fcntl.h>
 #include <poll.h>
 #include <linux/msm_ion.h>
-#include "QCamera_Intf.h"
+#include <camera.h>
 #include "mm_camera_interface2.h"
 #include "mm_camera.h"
 
@@ -113,15 +113,29 @@ int mm_camera_zsl_frame_cmp_and_enq(mm_camera_obj_t * my_obj,
     pthread_mutex_lock(&my_obj->ch[MM_CAMERA_CH_PREVIEW].mutex);
     pthread_mutex_lock(&my_obj->ch[MM_CAMERA_CH_SNAPSHOT].mutex);
 
+    CDBG("%s: node->frame.frame_id: %d, stream type: %d", __func__,
+          node->frame.frame_id, mystream->stream_type);
+
     if(mystream->stream_type == MM_CAMERA_STREAM_PREVIEW) {
         peerstream = &my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.main;
     } else
         peerstream = &my_obj->ch[MM_CAMERA_CH_PREVIEW].preview.stream;
+
     myq = &mystream->frame.readyq;
     peerq = &peerstream->frame.readyq;
     watermark = my_obj->ch[MM_CAMERA_CH_SNAPSHOT].buffering_frame.water_mark;
     interval = my_obj->ch[MM_CAMERA_CH_SNAPSHOT].buffering_frame.interval;
     expected_id = my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.expected_matching_id;
+
+    if(MM_CAMERA_STREAM_STATE_NOTUSED == mystream->state || MM_CAMERA_STREAM_STATE_NOTUSED == peerstream->state) {
+        CDBG_ERROR("%s: one or two streams have been released, not processing here", __func__);
+        pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_SNAPSHOT].mutex);
+        pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_PREVIEW].mutex);
+        return rc;
+    }
+
+
+
     peer_frame = peerq->tail;
     /* for 30-120 fps streaming no need to consider the wrapping back of frame_id
        expected_matching_id is used when requires skipping bwtween frames */
@@ -334,10 +348,18 @@ end:
     }
 
     CDBG("%s Dispatching ZSL frame ", __func__);
+    if(MM_CAMERA_STREAM_STATE_NOTUSED == mystream->state || MM_CAMERA_STREAM_STATE_NOTUSED == peerstream->state) {
+        CDBG_ERROR("%s: one or two streams have been released, not processing here\n", __func__);
+        pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_SNAPSHOT].mutex);
+        pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_PREVIEW].mutex);
+        return 0;
+    }
+    CDBG("%s: pending cnt :%d\n", __func__, my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.pending_cnt);
     if(my_obj->ch[MM_CAMERA_CH_SNAPSHOT].snapshot.pending_cnt > 0) {
         if(!myq->match_cnt || !peerq->match_cnt) {
             pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_SNAPSHOT].mutex);
             pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_PREVIEW].mutex);
+            CDBG_ERROR("%s: pending count is zero\n", __func__);
             return 0;
         }
         /* dequeue one by one and then pass to HAL */
@@ -346,11 +368,12 @@ end:
         if (!my_frame || !peer_frame) {
             pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_SNAPSHOT].mutex);
             pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_PREVIEW].mutex);
+            CDBG_ERROR("%s: one of the frames is null\n", __func__);
             return 0;
         }
         myq->match_cnt--;
         peerq->match_cnt--;
-        CDBG("%s: Dequeued frame: main frame idx: %d thumbnail "
+        ALOGE("%s: Dequeued frame: main frame idx: %d thumbnail "
              "frame idx: %d", __func__, my_frame->idx, peer_frame->idx);
         /* dispatch this pair of frames */
         memset(&data, 0, sizeof(data));
@@ -376,6 +399,7 @@ end:
     return rc;
 
 send_to_hal:
+    CDBG("%s:sending to HAL LAKS\n", __func__);
     for( i=0;i < MM_CAMERA_BUF_CB_MAX;i++) {
         if (buf_cb[i].cb && my_obj->poll_threads[MM_CAMERA_CH_SNAPSHOT].data.used == 1)
           buf_cb[i].cb(&data,buf_cb[i].user_data);
@@ -390,66 +414,6 @@ send_to_hal:
     }
     return rc;
 }
-
-static void mm_camera_read_rdi_frame(mm_camera_obj_t * my_obj)
-{
-    int rc = 0;
-    int idx;
-    int i;
-    mm_camera_stream_t *stream;
-    mm_camera_buf_cb_t buf_cb[MM_CAMERA_BUF_CB_MAX];
-    mm_camera_ch_data_buf_t data[MM_CAMERA_BUF_CB_MAX];
-
-    if (!my_obj->ch[MM_CAMERA_CH_RDI].acquired) {
-        ALOGE("Rdi channel is not in acquired state \n");
-        return;
-    }
-    stream = &my_obj->ch[MM_CAMERA_CH_RDI].rdi.stream;
-    idx =  mm_camera_read_msm_frame(my_obj, stream);
-    if (idx < 0) {
-        return;
-    }
-    ALOGE("%s Read RDI frame %d ", __func__, idx);
-    pthread_mutex_lock(&my_obj->ch[MM_CAMERA_CH_RDI].mutex);
-    for( i=0;i<MM_CAMERA_BUF_CB_MAX;i++) {
-        if((my_obj->ch[MM_CAMERA_CH_RDI].buf_cb[i].cb) &&
-                (my_obj->poll_threads[MM_CAMERA_CH_RDI].data.used == 1)) {
-            data[i].type = MM_CAMERA_CH_RDI;
-            data[i].def.idx = idx;
-            data[i].def.frame = &my_obj->ch[MM_CAMERA_CH_RDI].rdi.stream.frame.frame[idx].frame;
-            /* Since the frame is originating here, reset the ref count to either
-             * 2(ZSL case) or 1(non-ZSL case). */
-            if(my_obj->op_mode == MM_CAMERA_OP_MODE_ZSL)
-                my_obj->ch[MM_CAMERA_CH_RDI].rdi.stream.frame.ref_count[idx] = 2;
-            else
-                my_obj->ch[MM_CAMERA_CH_RDI].rdi.stream.frame.ref_count[idx] = 1;
-            CDBG("%s:calling data notify cb 0x%x, 0x%x\n", __func__,
-                     (uint32_t)my_obj->ch[MM_CAMERA_CH_RDI].buf_cb[i].cb,
-                     (uint32_t)my_obj->ch[MM_CAMERA_CH_RDI].buf_cb[i].user_data);
-            /*my_obj->ch[MM_CAMERA_CH_PREVIEW].buf_cb[i].cb(&data,
-                                        my_obj->ch[MM_CAMERA_CH_PREVIEW].buf_cb[i].user_data);*/
-            memcpy(&buf_cb[i], &my_obj->ch[MM_CAMERA_CH_RDI].buf_cb[i],
-                   sizeof(mm_camera_buf_cb_t) * MM_CAMERA_BUF_CB_MAX);
-        }
-    }
-    pthread_mutex_unlock(&my_obj->ch[MM_CAMERA_CH_RDI].mutex);
-
-    for( i=0;i<MM_CAMERA_BUF_CB_MAX;i++) {
-        if(buf_cb[i].cb != NULL && my_obj->poll_threads[MM_CAMERA_CH_RDI].data.used == 1) {
-            buf_cb[i].cb(&data[i],buf_cb[i].user_data);
-        }
-    }
-
-    if(my_obj->op_mode == MM_CAMERA_OP_MODE_ZSL) {
-        /* Reset match to 0. */
-        stream->frame.frame[idx].match = 0;
-        stream->frame.frame[idx].valid_entry = 0;
-        mm_camera_zsl_frame_cmp_and_enq(my_obj,
-          &my_obj->ch[MM_CAMERA_CH_RDI].rdi.stream.frame.frame[idx],
-          stream);
-    }
-}
-
 
 static void mm_camera_read_preview_frame(mm_camera_obj_t * my_obj)
 {
@@ -506,6 +470,7 @@ static void mm_camera_read_preview_frame(mm_camera_obj_t * my_obj)
             buf_cb[i].cb(&data[i],buf_cb[i].user_data);
         }
     }
+
     if(my_obj->op_mode == MM_CAMERA_OP_MODE_ZSL) {
         /* Reset match to 0. */
         stream->frame.frame[idx].match = 0;
@@ -841,9 +806,6 @@ void mm_camera_msm_data_notify(mm_camera_obj_t * my_obj, int fd,
     case MM_CAMERA_STREAM_PREVIEW:
         mm_camera_read_preview_frame(my_obj);
         break;
-    case MM_CAMERA_STREAM_RDI0:
-        mm_camera_read_rdi_frame(my_obj);
-        break;
     case MM_CAMERA_STREAM_SNAPSHOT:
         mm_camera_read_snapshot_main_frame(my_obj);
         break;
@@ -866,8 +828,6 @@ static mm_camera_channel_type_t mm_camera_image_mode_to_ch(int image_mode)
     switch(image_mode) {
     case MSM_V4L2_EXT_CAPTURE_MODE_PREVIEW:
         return MM_CAMERA_CH_PREVIEW;
-    case MSM_V4L2_EXT_CAPTURE_MODE_RDI:
-        return MM_CAMERA_CH_RDI;
     case MSM_V4L2_EXT_CAPTURE_MODE_MAIN:
     case MSM_V4L2_EXT_CAPTURE_MODE_THUMBNAIL:
         return MM_CAMERA_CH_SNAPSHOT;
@@ -916,6 +876,13 @@ void mm_camera_msm_evt_notify(mm_camera_obj_t * my_obj, int fd)
         }
         switch(evt->event_type) {
         case MM_CAMERA_EVT_TYPE_INFO:
+            CDBG("%s: event id : %d\n", __func__,evt->e.info.event_id);
+            if(evt->e.info.event_id == MM_CAMERA_INFO_FLASH_FRAME_IDX) {
+                CDBG("%s: valid entry: %d\n", __func__, evt->e.info.e.zsl_flash_info.valid_entires);
+                CDBG("%s: frame idx: %d\n", __func__,evt->e.info.e.zsl_flash_info.frame_idx[0]);
+                my_obj->ch[MM_CAMERA_CH_SNAPSHOT].buffering_frame.match_id =
+                    evt->e.info.e.zsl_flash_info.frame_idx[0];
+            }
            break;
         case MM_CAMERA_EVT_TYPE_STATS:
            break;

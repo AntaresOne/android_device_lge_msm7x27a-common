@@ -60,7 +60,6 @@ const char QCameraParameters::KEY_QC_SUPPORTED_ZSL_MODES[] = "zsl-values";
 const char QCameraParameters::KEY_QC_CAMERA_MODE[] = "camera-mode";
 const char QCameraParameters::KEY_QC_AE_BRACKET_HDR[] = "ae-bracket-hdr";
 const char QCameraParameters::KEY_QC_POWER_MODE[] = "power-mode";
-const char QCameraParameters::KEY_QC_HDR_SUPPORTED[] = "hdr-supported";
 const char QCameraParameters::KEY_QC_VISION_MODE[] = "intelligent-mode";
 const char QCameraParameters::KEY_QC_VISION_AE[] = "smart-screen-exposure";
 /*only effective when KEY_QC_AE_BRACKET_HDR set to ae_bracketing*/
@@ -70,6 +69,12 @@ const char QCameraParameters::KEY_QC_VISION_AE[] = "smart-screen-exposure";
 const char QCameraParameters::EFFECT_EMBOSS[] = "emboss";
 const char QCameraParameters::EFFECT_SKETCH[] = "sketch";
 const char QCameraParameters::EFFECT_NEON[] = "neon";
+const char QCameraParameters::EFFECT_USER_DEFINED1[] = "userdefined1";
+const char QCameraParameters::EFFECT_USER_DEFINED2[] = "userdefined2";
+const char QCameraParameters::EFFECT_USER_DEFINED3[] = "userdefined3";
+const char QCameraParameters::EFFECT_USER_DEFINED4[] = "userdefined4";
+const char QCameraParameters::EFFECT_USER_DEFINED5[] = "userdefined5";
+const char QCameraParameters::EFFECT_USER_DEFINED6[] = "userdefined6";
 
 // Values for auto exposure settings.
 const char QCameraParameters::TOUCH_AF_AEC_OFF[] = "touch-off";
