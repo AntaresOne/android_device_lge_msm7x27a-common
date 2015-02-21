@@ -73,9 +73,6 @@ BOARD_HAS_NO_SELECT_BUTTON := true
 BOARD_VOLD_MAX_PARTITIONS := 23
 TARGET_USERIMAGES_USE_EXT4 := true
 
-# Don't generate block mode update zips
-BLOCK_BASED_OTA := false
-
 # cflags
 COMMON_GLOBAL_CFLAGS += -DLPA_DEFAULT_BUFFER_SIZE=480
 TARGET_GLOBAL_CFLAGS += -mfloat-abi=softfp -mfpu=neon-vfpv4 -mtune=cortex-a9
@@ -102,13 +99,16 @@ NUM_FRAMEBUFFER_SURFACE_BUFFERS := 3
 TARGET_NO_INITLOGO := true
 BOARD_EGL_CFG := $(LOCAL_PATH)/egl.cfg
 
-
 # Bluetooth
 BOARD_HAVE_BLUETOOTH := true
+
+# Build
+TARGET_SYSTEMIMAGE_USE_SQUISHER := true
 
 # Compiler Optimization
 ARCH_ARM_HIGH_OPTIMIZATION := true
 ARCH_ARM_HIGH_OPTIMIZATION_COMPAT := true
+TARGET_USE_O3 := true
 
 # BIONIC: use legacy mmap
 BOARD_USES_LEGACY_MMAP := true
@@ -140,6 +140,21 @@ ifeq ($(HOST_OS),linux)
  endif
 endif
 DONT_DEXPREOPT_PREBUILTS := true
+
+# Add h/w acceleration in browser
+ENABLE_WEBGL := true
+WITH_JIT := true
+ENABLE_JSC_JIT := true
+JS_ENGINE := v8
+HTTP := chrome
+
+# Skip droiddoc build to save build time
+BOARD_SKIP_ANDROID_DOC_BUILD := true
+DISABLE_DROIDDOC := true
+
+# We're still using 4.4 blobs
+COMMON_GLOBAL_CFLAGS += -DPRE_LOLLIPOP_BLOBS
+COMMON_GLOBAL_CFLAGS += -DSK_SUPPORT_LEGACY_DECODEFILE
 
 # RIL
 TARGET_NEEDS_NON_PIE_SUPPORT := true
