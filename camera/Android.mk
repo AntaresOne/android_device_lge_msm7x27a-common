@@ -43,12 +43,13 @@ endif
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 LOCAL_C_INCLUDES += \
-     hardware/qcom/display-$(TARGET_QCOM_DISPLAY_VARIANT)/libgralloc \
-     hardware/qcom/media-$(TARGET_QCOM_MEDIA_VARIANT)/libstagefrighthw \
-     hardware/qcom/media-$(TARGET_QCOM_MEDIA_VARIANT)/mm-core/inc \
+     hardware/qcom/display-caf/msm7x27a/libgralloc \
+     hardware/qcom/media-caf/msm7x27a)/libstagefrighthw \
+     hardware/qcom/media-caf/msm7x27a/mm-core/inc \
      frameworks/base/services/camera/libcameraservice \
      frameworks/native/include/media/hardware \
-     $(LOCAL_PATH)/mm-camera-interface
+     $(LOCAL_PATH)/mm-camera-interface \
+     system/media/camera/include
 
 
 LOCAL_SHARED_LIBRARIES := \
@@ -70,9 +71,9 @@ else
     LOCAL_SHARED_LIBRARIES += liboemcamera
 endif
 
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
-LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_RELATIVE_PATH := hw
+LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
 include $(BUILD_SHARED_LIBRARY)
 endif # BUILD_TINY_ANDROID
 endif # USE_CAMERA_STUB
