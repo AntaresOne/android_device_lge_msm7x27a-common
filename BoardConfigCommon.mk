@@ -163,6 +163,9 @@ USE_DEVICE_SPECIFIC_CAMERA := true
 TARGET_NEEDS_NON_PIE_SUPPORT := true
 BOARD_RIL_CLASS := ../../../device/lge/msm7x27a-common/ril/
 
+# Enable workaround for slow rom flash
+BOARD_SUPPRESS_SECURE_ERASE := true
+
 # GPS
 BOARD_USES_QCOM_GPS := true
 BOARD_VENDOR_QCOM_GPS_LOC_API_HARDWARE := msm7x27a
