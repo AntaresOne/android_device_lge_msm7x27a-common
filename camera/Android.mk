@@ -43,12 +43,13 @@ endif
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
 LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr
 LOCAL_C_INCLUDES += \
-   hardware/qcom/display-caf/msm7x27a/libgralloc \
-   hardware/qcom/media-caf/msm7x27a/libstagefrighthw \
-   hardware/qcom/media-caf/msm7x27a/mm-core/inc \
-   frameworks/base/services/camera/libcameraservice \
-   frameworks/native/include/media/hardware \
-   $(LOCAL_PATH)/mm-camera-interface
+     hardware/qcom/display-$(TARGET_QCOM_DISPLAY_VARIANT)/libgralloc \
+     hardware/qcom/media-$(TARGET_QCOM_MEDIA_VARIANT)/libstagefrighthw \
+     hardware/qcom/media-$(TARGET_QCOM_MEDIA_VARIANT)/mm-core/inc \
+     frameworks/base/services/camera/libcameraservice \
+     frameworks/native/include/media/hardware \
+     $(LOCAL_PATH)/mm-camera-interface
+
 
 LOCAL_SHARED_LIBRARIES := \
     libcamera_client \
@@ -60,7 +61,7 @@ LOCAL_SHARED_LIBRARIES := \
     libbinder \
     libmmcamera_interface2
 
-LOCAL_CFLAGS += -include bionic/libc/kernel/uapi/linux/socket.h
+LOCAL_CFLAGS += -include bionic/libc/kernel/common/linux/socket.h
 
 ifeq ($(DLOPEN_LIBMMCAMERA),1)
     LOCAL_SHARED_LIBRARIES += libdl
@@ -69,8 +70,7 @@ else
     LOCAL_SHARED_LIBRARIES += liboemcamera
 endif
 
-LOCAL_C_INCLUDES := system/media/camera/include
-LOCAL_MODULE_RELATIVE_PATH := hw
+LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 LOCAL_MODULE := camera.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_TAGS := optional
 include $(BUILD_SHARED_LIBRARY)

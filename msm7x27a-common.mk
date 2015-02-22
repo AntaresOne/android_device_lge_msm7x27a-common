@@ -137,6 +137,7 @@ PRODUCT_PACKAGES += \
 
 # Radio properties
 PRODUCT_PROPERTY_OVERRIDES += \
+    ro.telephony.ril_class=LGEQualcommUiccRIL \
     ro.telephony.default_network=0 \
     ro.telephony.call_ring.multiple=0 \
     telephony.lteOnGsmDevice=0 \
