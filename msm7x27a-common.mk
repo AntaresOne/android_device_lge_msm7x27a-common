@@ -103,6 +103,17 @@ PRODUCT_PACKAGES += \
 # Gps hal
 PRODUCT_PACKAGES += \
     gps.msm7x27a
+    
+# Build sim toolkit
+PRODUCT_PACKAGES += \
+    Stk
+
+# F2FS
+PRODUCT_PACKAGES += \
+   mkfs.f2fs \
+   fsck.f2fs \
+   make_f2fs \
+   mkf2fsuserimg.sh 
 
 # Power Hal
 PRODUCT_PACKAGES += \
