@@ -352,7 +352,6 @@ status_t AudioPolicyManager::setDeviceConnectionState(audio_devices_t device,
             } else if (audio_is_bluetooth_sco_device(device)) {
                 // handle SCO device disconnection
                 mScoDeviceAddress = "";
-#if 0
             } else if (audio_is_usb_device(device)) {
                 // handle USB device disconnection
                 mUsbOutCardAndDevice = "";
@@ -360,7 +359,6 @@ status_t AudioPolicyManager::setDeviceConnectionState(audio_devices_t device,
                 AudioParameter param;
                 param.add(String8("usb_connected"), String8("false"));
                 mpClientInterface->setParameters(0, param.toString());
-#endif
             }
             // not currently handling multiple simultaneous submixes: ignoring remote submix
             //   case and address
@@ -535,13 +533,11 @@ AudioSystem::device_connection_state AudioPolicyManager::getDeviceConnectionStat
                 address != "" && mScoDeviceAddress != address) {
                 return state;
             }
-#if 0
             if (audio_is_usb_device(device) &&
                 ((address != "" && mUsbCardAndDevice != address))) {
                 ALOGE("getDeviceConnectionState() invalid device: %x", device);
                 return state;
             }
-#endif
             if (audio_is_remote_submix_device((audio_devices_t)device) && !mHasRemoteSubmix) {
                 return state;
             }
@@ -1060,8 +1056,8 @@ status_t AudioPolicyManager::stopOutput(audio_io_handle_t output,
 
 audio_io_handle_t AudioPolicyManager::getInput(int inputSource,
                                     uint32_t samplingRate,
-                                    audio_format_t format,
-                                    audio_channel_mask_t channelMask,
+                                    uint32_t format,
+                                    uint32_t channelMask,
                                     AudioSystem::audio_in_acoustics acoustics)
 {
     audio_io_handle_t input = 0;
