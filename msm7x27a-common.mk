@@ -144,8 +144,8 @@ PRODUCT_PACKAGES += \
     
 # Audio
 PRODUCT_PACKAGES += \
-    audio_policy.msm7x27 \
-    audio.primary.msm7x27
+    audio_policy.msm7x27a \
+    audio.primary.msm7x27a
 
 # light hal
 PRODUCT_PACKAGES += \
@@ -153,7 +153,7 @@ PRODUCT_PACKAGES += \
 
 # Radio properties
 PRODUCT_PROPERTY_OVERRIDES += \
-    ro.telephony.ril_class=LGEQualcommUiccRIL \
+    #ro.telephony.ril_class=LGEQualcommUiccRIL \#
     ro.telephony.default_network=0 \
     ro.telephony.call_ring.multiple=0 \
     telephony.lteOnGsmDevice=0 \
@@ -164,7 +164,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
     persist.radio.apm_sim_not_pwdn=1
 
 # Media codecs
-PRODUCT_COPY_FILES += \
+#PRODUCT_COPY_FILES += \
     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:system/etc/media_codecs_google_audio.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:system/etc/media_codecs_google_telephony.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_video.xml:system/etc/media_codecs_google_video.xml \
