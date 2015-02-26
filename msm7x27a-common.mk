@@ -141,11 +141,6 @@ PRODUCT_PACKAGES += \
     audio.primary.msm7x27a \
     audio_policy.msm7x27a \
     libaudio-resampler
-    
-# Audio
-PRODUCT_PACKAGES += \
-    audio_policy.msm7x27a \
-    audio.primary.msm7x27a
 
 # light hal
 PRODUCT_PACKAGES += \
